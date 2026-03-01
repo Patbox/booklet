@@ -82,5 +82,6 @@ Other way is to use `booklet:open_page` custom click action with `{entry: "names
 ## Example page definitions.
 As an example/reference you can check the PolyFactory's booklet page definitions, which are stored here:
 - https://github.com/Patbox/PolyFactory/tree/master/src/main/resources/data/polyfactory/booklet/pages/
+
 You can also see used images here:
 - https://github.com/Patbox/PolyFactory/tree/master/src/main/resources/assets/polyfactory/textures/booklet/image
