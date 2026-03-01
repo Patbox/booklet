@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "booklet",
+  "version": "${version}",
+  "name": "Booklet",
+  "description": "A server-side, data driven, in-game guidebook implementation!",
+  "authors": [
+    "Patbox"
+  ],
+  "contact": {
+    "homepage": "https://pb4.eu",
+    "sources": "https://github.com/Patbox/booklet"
+  },
+  "license": "LGPLv3",
+  "icon": "assets/booklet/textures/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "eu.pb4.booklet.impl.BookletInit::init"
+    ],
+    "fabric-datagen": [
+      "eu.pb4.booklet.impl.datagen.DataGenInit"
+    ]
+  },
+  "mixins": [
+    "booklet.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": "1.21.11",
+    "polymer-core": ">=0.10.0-",
+    "polymer-resource-pack": ">=0.10.0-",
+    "java": ">=21"
+  }
+}

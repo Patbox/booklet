@@ -1,0 +1,177 @@
+package eu.pb4.booklet.impl;
+
+import eu.pb4.booklet.api.body.ImageBody;
+import eu.pb4.polymer.resourcepack.api.PackResource;
+import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
+import eu.pb4.polymer.resourcepack.api.ResourcePackBuilder;
+import eu.pb4.polymer.resourcepack.extras.api.format.font.BitmapProvider;
+import eu.pb4.polymer.resourcepack.extras.api.format.font.FontAsset;
+import eu.pb4.polymer.resourcepack.extras.api.format.font.SpaceProvider;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.dialog.body.DialogBody;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
+
+import java.awt.image.BufferedImage;
+import java.util.*;
+import java.util.function.Function;
+
+public class BookletImageHandler {
+    private static final Map<Identifier, ProcessedImage> IMAGES = new HashMap<>();
+    private static final ProcessedImage MISSING = new ProcessedImage(Component.literal("<NO IMAGE>").withStyle(ChatFormatting.DARK_RED), 300, ' ', ' ', 0);
+
+    public static ProcessedImage getImage(Identifier identifier) {
+        return IMAGES.getOrDefault(identifier, MISSING);
+    }
+
+    public static void init() {
+        PolymerResourcePackUtils.RESOURCE_PACK_AFTER_INITIAL_CREATION_EVENT.register(BookletImageHandler::createImages);
+    }
+
+    private static void createImages(ResourcePackBuilder builder) {
+        var fontBuilder = new AutoBuilder(builder);
+
+        IMAGES.clear();
+
+        builder.forEachResource((path, resource) -> {
+            var ogpath = path;
+            if (!path.startsWith("assets/")) {
+                return;
+            }
+
+            path = path.substring("assets/".length());
+            var separator = path.indexOf('/');
+            if (separator == -1) {
+                return;
+            }
+
+            var namespace = path.substring(0, separator);
+            path = path.substring(separator + 1);
+            if (!path.startsWith("textures/booklet/image/") || !path.endsWith(".png")) {
+                return;
+            }
+            var id = Identifier.fromNamespaceAndPath(namespace, path.substring("textures/booklet/image/".length(), path.length() - ".png".length()));
+            var imageString = new StringBuilder();
+            var b = BitmapProvider.builder(Identifier.fromNamespaceAndPath(namespace, path.substring("textures/".length())));
+            var image = resource.asImage();
+            b.height(9);
+            b.ascent(7);
+
+            var scale = Mth.ceil(image.getWidth() / 292f);
+            var dy = 9;
+            var dx = Math.min(128 / scale, 16);
+
+            var width = Mth.ceil((double) image.getWidth() / scale / dx) * dx;
+            var height = Mth.ceil((double) image.getHeight() / scale / dy) * dy;
+
+            var from = fontBuilder.peek();
+
+            for (var y = 0; y < height; y += dy) {
+                var line = new StringBuilder();
+                var ix = 0;
+                for (; ix < width / 2; ix += dx) {
+                    imageString.append('b');
+                }
+
+                for (var x = 0; x < width; x += dx) {
+                    imageString.append(fontBuilder.peek());
+                    imageString.append('a');
+                    line.append(fontBuilder.advance());
+                }
+                for (; ix < width; ix += dx) {
+                    imageString.append('b');
+                }
+                b.chars(line.toString());
+
+                if (y + dy < height) {
+                    imageString.append("\n");
+                }
+            }
+            var to = fontBuilder.peek();
+
+            fontBuilder.add(b);
+
+            IMAGES.put(id, new ProcessedImage(Component.literal(imageString.toString()).setStyle(fontBuilder.style), width + width / dx + 8, from, to, fontBuilder.id));
+
+            {
+                var newImage = new BufferedImage(width * scale, height * scale, BufferedImage.TYPE_INT_ARGB);
+                var yOffset = (height * scale - image.getHeight()) / 2;
+                for (var y = 0; y < image.getHeight(); y++) {
+                    for (var x = 0; x < image.getWidth(); x++) {
+                        var color = image.getRGB(x, y);
+                        if (ARGB.alpha(color) == 0) {
+                            color |= 0x01000000;
+                        }
+                        newImage.setRGB(x, y + yOffset, color);
+                    }
+                }
+                builder.addData(ogpath, PackResource.fromImage(newImage));
+            }
+
+            fontBuilder.checkThreshold();
+        });
+
+        fontBuilder.character = 0xFFFF;
+        fontBuilder.checkThreshold();
+    }
+
+    public static List<DialogBody> getAllImages() {
+        return IMAGES.entrySet().stream().sorted(Comparator.comparing(((Function<Map.Entry<Identifier, ProcessedImage>, ProcessedImage>) Map.Entry::getValue).andThen(ProcessedImage::from)))
+                .map(x -> (DialogBody) new ImageBody(x.getKey(),
+                Optional.of(Component.literal(x.getKey() + "P" + x.getValue().page + " <0x" + Integer.toString(x.getValue().from, 16) + ", 0x" + Integer.toString(x.getValue().to, 16) + ">" )))).toList();
+    }
+
+    public record ProcessedImage(Component component, int width, int from, int to, int page) {
+    }
+
+    private static class AutoBuilder {
+        private final ResourcePackBuilder builder;
+        private int id = 0;
+        FontAsset.Builder fontBuilder;
+        char character;
+        Style style;
+
+        public AutoBuilder(ResourcePackBuilder builder) {
+            this.builder = builder;
+            this.reset();
+        }
+
+        char peek() {
+            return character;
+        }
+
+        char advance() {
+            var c = character++;
+            if (character >= 0x0600 && character < 0x0700) {
+                character = '\u0700';
+            }
+
+            return c;
+        }
+
+        void checkThreshold() {
+            if (character > 0xA000) {
+                builder.addData("assets/booklet/font/image_hack_" + id + ".json", fontBuilder.build());
+                reset();
+            }
+        }
+
+        void reset() {
+            id++;
+            fontBuilder = FontAsset.builder();
+            character = 0x0100;
+            style = Style.EMPTY.withColor(0xFFFFFF).withFont(new FontDescription.Resource(BookletImplUtil.id("image_hack_" + id))).withShadowColor(0);
+
+            fontBuilder.add(SpaceProvider.builder().add('a', -1));
+            fontBuilder.add(SpaceProvider.builder().add('b', 1));
+        }
+
+        public void add(BitmapProvider.Builder b) {
+            this.fontBuilder.add(b);
+        }
+    }
+}

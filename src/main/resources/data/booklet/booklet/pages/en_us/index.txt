@@ -1,0 +1,7 @@
+### Section: PageInfo
+title=<lang 'item.booklet.guidebook'>
+description=<lang 'item.booklet.guidebook.desc'>
+icon=booklet:guidebook
+book_color=#c46bff
+### EndSection: PageInfo
+### Category Entries: booklet:main_page
