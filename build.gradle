@@ -1,12 +1,11 @@
 plugins {
-	id 'fabric-loom' version '1.13.+'
+	id 'net.fabricmc.fabric-loom' version '1.15.+'
 	id 'maven-publish'
 }
 
-sourceCompatibility = JavaVersion.VERSION_21
-targetCompatibility = JavaVersion.VERSION_21
-
-archivesBaseName = project.archives_base_name
+base {
+	archivesName = project.archives_base_name
+}
 version = project.mod_version
 group = project.maven_group
 
@@ -18,10 +17,6 @@ repositories {
 	// for more information about repositories.
 	maven { url 'https://maven.nucleoid.xyz' }
 	maven { url "https://api.modrinth.com/maven/" }
-	maven {
-		name = 'ParchmentMC'
-		url = 'https://maven.parchmentmc.org'
-	}
 	mavenLocal()
 }
 
@@ -32,7 +27,7 @@ loom {
 			name = "Data Generation"
 			runDir = "build/datagen"
 			vmArg("-Dfabric-api.datagen")
-			vmArg("-Dfabric-api.datagen.modid=booklet")
+			vmArg("-Dfabric-api.datagen.id=booklet")
 			vmArg("-Dfabric-api.datagen.output-dir=${file("src/main/generated")}")
 		}
 	}
@@ -52,30 +47,23 @@ sourceSets {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.layered {
-		officialMojangMappings()
-		parchment("org.parchmentmc.data:parchment-1.21.10:2025.10.12@zip")
-	}
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	modLocalRuntime "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	modCompileOnly "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	localRuntime "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	compileOnly "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	modImplementation "eu.pb4:polymer-core:${project.polymer_version}"
-	modImplementation "eu.pb4:polymer-resource-pack:${project.polymer_version}"
-	modImplementation "eu.pb4:polymer-resource-pack-extras:${project.polymer_version}"
+	implementation "eu.pb4:polymer-core:${project.polymer_version}"
+	implementation "eu.pb4:polymer-resource-pack:${project.polymer_version}"
+	implementation "eu.pb4:polymer-resource-pack-extras:${project.polymer_version}"
 
-	modImplementation "eu.pb4:polymer-autohost:${project.polymer_version}"
-	modCompileOnly 'maven.modrinth:polydex:1.8.1+1.21.11'
+	implementation "eu.pb4:polymer-autohost:${project.polymer_version}"
+	compileOnly 'maven.modrinth:polydex:1.9.0+26.1-rc-2'
 
-	modImplementation include('eu.pb4:sgui:1.12.0+1.21.11')
-	modImplementation include('eu.pb4:map-canvas-api:0.7.1+1.21.11')
-	modImplementation include("eu.pb4:placeholder-api:2.8.2+1.21.10")
-	modImplementation include('xyz.nucleoid:server-translations-api:2.5.2+1.21.9-pre3')
-
-	modCompileOnly("maven.modrinth:htm:1.2.0")
-
+	implementation include('eu.pb4:sgui:2.0.0-beta.1+26.1')
+	implementation include('eu.pb4:map-canvas-api:0.8.0+26.1')
+	implementation include("eu.pb4:placeholder-api:3.0.0-beta.2+26.1")
+	implementation include('xyz.nucleoid:server-translations-api:3.0.0+26.1-pre-3')
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
@@ -96,7 +84,7 @@ tasks.withType(JavaCompile).configureEach {
 	// If Javadoc is generated, this must be specified in that task too.
 	it.options.encoding = "UTF-8"
 
-	it.options.release = 21
+	it.options.release = 25
 }
 
 java {
@@ -108,7 +96,7 @@ java {
 
 jar {
 	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}"}
+		rename { "${it}_${project.archives_base_name}"}
 	}
 }
 
@@ -119,11 +107,11 @@ publishing {
 	publications {
 		mavenJava(MavenPublication) {
 			// add all the jars that should be included when publishing to maven
-			artifact(remapJar) {
-				builtBy remapJar
+			artifact(jar) {
+				builtBy jar
 			}
 			artifact(sourcesJar) {
-				builtBy remapSourcesJar
+				builtBy sourcesJar
 			}
 		}
 	}

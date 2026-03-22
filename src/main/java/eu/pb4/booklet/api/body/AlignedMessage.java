@@ -5,6 +5,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import eu.pb4.booklet.api.TextUncenterer;
 import eu.pb4.polymer.core.api.other.PolymerMapCodec;
+import net.fabricmc.fabric.api.networking.v1.context.PacketContext;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
@@ -12,7 +13,7 @@ import net.minecraft.server.dialog.Dialog;
 import net.minecraft.server.dialog.body.DialogBody;
 import net.minecraft.server.dialog.body.PlainMessage;
 import net.minecraft.util.StringRepresentable;
-import xyz.nucleoid.packettweaker.PacketContext;
+import xyz.nucleoid.server.translations.api.LocalizationTarget;
 
 import java.util.Locale;
 
@@ -39,7 +40,7 @@ public record AlignedMessage(Component contents, int width, Align align, int non
 
 
     public PlainMessage asVanillaBody(PacketContext context) {
-        var language = context.getClientOptions() != null ? context.getClientOptions().language() : "en_us";
+        var language = LocalizationTarget.of(context).getLanguageCode();
         return new PlainMessage(switch (this.align) {
             case LEFT ->
                     CommonComponents.joinLines(TextUncenterer.getLeftAligned(this.contents, this.width - 4 * 2, language));

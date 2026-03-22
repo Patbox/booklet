@@ -8,7 +8,7 @@ import net.minecraft.network.chat.contents.objects.PlayerSprite;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.component.ResolvableProfile;
-import xyz.nucleoid.packettweaker.PacketContext;
+import net.fabricmc.fabric.api.networking.v1.context.PacketContext;
 import xyz.nucleoid.server.translations.api.LocalizationTarget;
 
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class TextTranslationUtils {
     }
 
     public static void visitText(PacketContext context, Component text, FormattedText.ContentConsumer<?> visitor) {
-        visitText(LanguageHandler.get(context.getClientOptions() != null ? context.getClientOptions().language() : "en_us"), text, visitor);
+        visitText(LanguageHandler.get(LocalizationTarget.of(context).getLanguageCode()), text, visitor);
     }
     public static void visitText(LanguageHandler lang, Component text, FormattedText.ContentConsumer<?> visitor) {
         if (text.getContents() instanceof TranslatableContents content) {
@@ -66,7 +66,7 @@ public class TextTranslationUtils {
     }
 
     public static void visitText(PacketContext context, Component text, FormattedText.StyledContentConsumer<?> visitor) {
-        visitText(LanguageHandler.get(context.getClientOptions() != null ? context.getClientOptions().language() : "en_us"), text, visitor);
+        visitText(LanguageHandler.get(LocalizationTarget.of(context).getLanguageCode()), text, visitor);
     }
     public static void visitText(LanguageHandler lang, Component text, FormattedText.StyledContentConsumer<?> visitor) {
         visitText(lang, text, visitor, Style.EMPTY);

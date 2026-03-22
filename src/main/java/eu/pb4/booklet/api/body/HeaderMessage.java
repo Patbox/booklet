@@ -7,13 +7,14 @@ import eu.pb4.booklet.impl.language.TextTranslationUtils;
 import eu.pb4.booklet.api.TextUncenterer;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
 import eu.pb4.polymer.core.api.other.PolymerMapCodec;
+import net.fabricmc.fabric.api.networking.v1.context.PacketContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.dialog.Dialog;
 import net.minecraft.server.dialog.body.DialogBody;
 import net.minecraft.server.dialog.body.PlainMessage;
-import xyz.nucleoid.packettweaker.PacketContext;
+import xyz.nucleoid.server.translations.api.LocalizationTarget;
 
 public record HeaderMessage(Component contents, TextColor color, int width) implements DialogBody {
     public HeaderMessage(Component contents, int width) {
@@ -32,7 +33,7 @@ public record HeaderMessage(Component contents, TextColor color, int width) impl
     }
 
     public PlainMessage asVanillaBody(PacketContext context) {
-        var language = context.getClientOptions() != null ? context.getClientOptions().language() : "en_us";
+        var language = LocalizationTarget.of(context).getLanguageCode();
         var title = Component.literal(" ")
                 .append(TextTranslationUtils.toTranslatedComponent(LanguageHandler.get(language), contents))
                 .append(" ");

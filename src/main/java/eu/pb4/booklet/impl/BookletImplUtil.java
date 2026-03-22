@@ -6,7 +6,8 @@ import eu.pb4.booklet.impl.ui.GuiTextures;
 import eu.pb4.booklet.impl.ui.UiResourceCreator;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.sgui.api.GuiHelpers;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
+import eu.pb4.sgui.api.SguiUtils;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.*;
@@ -50,7 +51,7 @@ public class BookletImplUtil {
     }
 
     public static List<DialogBody> getCategoryBodyList(Identifier category, ParserContext ctx) {
-        var player = Objects.requireNonNull(ctx.getOrThrow(PlaceholderContext.KEY).player());
+        var player = Objects.requireNonNull(ctx.getOrThrow(ServerPlaceholderContext.SERVER_KEY).serverPlayer());
         var state = ctx.getOrThrow(BookletOpenState.KEY);
         var body = new ArrayList<DialogBody>();
         var lang = player.clientInformation().language();
@@ -81,7 +82,7 @@ public class BookletImplUtil {
                     290);
 
             body.add(page.info().icon().isEmpty() ? plainBody : new ItemBody(
-                    page.info().icon(),
+                    page.info().icon().get(),
                     Optional.of(plainBody),
                     false, false,
                     1, 17
@@ -110,7 +111,7 @@ public class BookletImplUtil {
                 return false;
             }
         }
-        var ctx = ParserContext.of(BookletOpenState.KEY, state.pushPage(id)).with(PlaceholderContext.KEY, PlaceholderContext.of(player));
+        var ctx = ParserContext.of(BookletOpenState.KEY, state.pushPage(id)).with(ServerPlaceholderContext.SERVER_KEY, ServerPlaceholderContext.of(player));
         player.openDialog(Holder.direct(page.toDialog(ctx, state)));
         return true;
     }
@@ -119,8 +120,8 @@ public class BookletImplUtil {
         var returnState = state.popPage();
 
         PolydexCompat.openUsagePage(player, identifier, () -> {
-            if (GuiHelpers.getCurrentGui(player) != null) {
-                GuiHelpers.getCurrentGui(player).close();
+            if (SguiUtils.getCurrentGui(player) != null) {
+                SguiUtils.getCurrentGui(player).close();
             }
             openPage(player, returnState.page(), returnState.state());
         });
@@ -130,8 +131,8 @@ public class BookletImplUtil {
         var returnState = state.popPage();
 
         PolydexCompat.openResultPage(player, identifier, () -> {
-            if (GuiHelpers.getCurrentGui(player) != null) {
-                GuiHelpers.getCurrentGui(player).close();
+            if (SguiUtils.getCurrentGui(player) != null) {
+                SguiUtils.getCurrentGui(player).close();
             }
             openPage(player, returnState.page(), returnState.state());
         });
@@ -141,8 +142,8 @@ public class BookletImplUtil {
         var returnState = state.popPage();
 
         PolydexCompat.openCategoryPage(player, identifier, () -> {
-            if (GuiHelpers.getCurrentGui(player) != null) {
-                GuiHelpers.getCurrentGui(player).close();
+            if (SguiUtils.getCurrentGui(player) != null) {
+                SguiUtils.getCurrentGui(player).close();
             }
             openPage(player, returnState.page(), returnState.state());
         });

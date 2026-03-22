@@ -4,7 +4,7 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.datafixers.util.Either;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.arguments.SimpleArguments;
-import eu.pb4.placeholders.api.node.DirectTextNode;
+import eu.pb4.placeholders.api.node.DirectComponentNode;
 import eu.pb4.placeholders.api.node.LiteralNode;
 import eu.pb4.placeholders.api.node.TextNode;
 import eu.pb4.placeholders.api.parsers.NodeParser;
@@ -29,6 +29,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.dialog.body.DialogBody;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 
 import java.util.*;
 import java.util.function.Function;
@@ -41,12 +42,12 @@ public class PageParser {
     private Identifier currentPage = null;
 
     public PageParser(HolderLookup.Provider lookup) {
-        this.ctx = ParserContext.of(ParserContext.Key.WRAPPER_LOOKUP, lookup);
+        this.ctx = ParserContext.of(ParserContext.Key.HOLDER_LOOKUP, lookup);
         this.itemParser = new ItemParser(lookup);
         this.parser = NodeParser.builder()
                 .quickText()
                 .markdown()
-                .globalPlaceholders()
+                .serverPlaceholders()
                 .customTagRegistry(TagRegistry.builderCopyDefault()
                         .add(TextTag.self("nl", "booklet", args -> new LiteralNode("\n")))
                         .add(TextTag.self("nl2", "booklet", args -> new LiteralNode("\n\n")))
@@ -57,7 +58,7 @@ public class PageParser {
                             } catch (Throwable e) {
                                 stack = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(args.getNext("item", "stone"))).getDefaultInstance();
                             }
-                            return new DirectTextNode(stack.getHoverName());
+                            return new DirectComponentNode(stack.getHoverName());
                         }))
                         .add(TextTag.self("citem", "booklet", args -> {
                             ItemStack stack = ItemStack.EMPTY;
@@ -66,7 +67,7 @@ public class PageParser {
                             } catch (Throwable e) {
                                 stack = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(args.getNext("item", "stone"))).getDefaultInstance();
                             }
-                            return new DirectTextNode(Component.empty().append(stack.getHoverName()).setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)));
+                            return new DirectComponentNode(Component.empty().append(stack.getHoverName()).setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)));
                         }))
                         .add(TextTag.enclosing("polydex", "booklet", (node, args, parser) -> {
                             var id = args.getNext("id", "");
@@ -99,7 +100,7 @@ public class PageParser {
     public BookletPage readPage(Identifier identifier, String page) {
         currentPage = identifier;
         var ctx = ParserContext.of();
-        var infoIcon = ItemStack.EMPTY;
+        var infoIcon = Optional.<ItemStackTemplate>empty();
         var title = identifier.toString();
         var externalTitle = Optional.<String>empty();
         var description = Optional.<String>empty();
@@ -251,7 +252,7 @@ public class PageParser {
                     case "icon" -> {
                         try {
                             var res = this.itemParser.parse(new StringReader(value));
-                            infoIcon = new ItemStack(res.item(), 1, res.components());
+                            infoIcon = Optional.of(new ItemStackTemplate(res.item(), 1, res.components()));
                         } catch (Throwable e) {
                             // Ignore
                         }
@@ -263,8 +264,8 @@ public class PageParser {
         }
 
         body.add(contents, width, margin, alignment);
-        return new BookletPage(new BookletPage.Info(identifier, infoIcon, parser.parseText(title, ctx), externalTitle.map(x -> parser.parseText(x, ctx)),
-                description.map(x -> parser.parseText(x, ctx)), categories, color, modelOverride), body.list);
+        return new BookletPage(new BookletPage.Info(identifier, infoIcon, parser.parseComponent(title, ctx), externalTitle.map(x -> parser.parseComponent(x, ctx)),
+                description.map(x -> parser.parseComponent(x, ctx)), categories, color, modelOverride), body.list);
     }
 
     private TextNode stripAndParse(String string) {
@@ -295,9 +296,9 @@ public class PageParser {
 
         public void add(TextNode node, Function<Component, DialogBody> function) {
             if (node.isDynamic()) {
-                list.add(x -> List.of(function.apply(node.toText(x))));
+                list.add(x -> List.of(function.apply(node.toComponent(x))));
             } else {
-                var out = List.of(function.apply(node.toText(pageParser.ctx)));
+                var out = List.of(function.apply(node.toComponent(pageParser.ctx)));
                 list.add(x -> out);
             }
         }
@@ -307,13 +308,13 @@ public class PageParser {
                 var node = pageParser.stripAndParse(contents.toString());
                 if (node.isDynamic()) {
                     list.add(x -> {
-                        var y = node.toText(x);
+                        var y = node.toComponent(x);
                         return y.getSiblings().isEmpty() && y.getContents() instanceof PlainTextContents plainTextContents && plainTextContents.text().isEmpty()
                                 ? List.of()
                                 : List.of(new AlignedMessage(y, width, align, margin));
                     });
                 } else {
-                    var y = node.toText(this.pageParser.ctx);
+                    var y = node.toComponent(this.pageParser.ctx);
                     if (!y.getSiblings().isEmpty() || !(y.getContents() instanceof PlainTextContents plainTextContents && plainTextContents.text().isEmpty())) {
                         List<DialogBody> z = List.of(new AlignedMessage(y, width, align, margin));
                         this.list.add(x -> z);

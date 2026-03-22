@@ -4,7 +4,9 @@ package eu.pb4.booklet.api.item;
 import eu.pb4.booklet.impl.BookletOpenState;
 import eu.pb4.booklet.impl.BookletImplUtil;
 import eu.pb4.polymer.core.api.item.SimplePolymerItem;
+import net.fabricmc.fabric.api.networking.v1.context.PacketContext;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -18,7 +20,8 @@ import net.minecraft.world.item.component.MapItemColor;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
-import xyz.nucleoid.packettweaker.PacketContext;
+import xyz.nucleoid.server.translations.api.Localization;
+import xyz.nucleoid.server.translations.api.LocalizationTarget;
 
 import java.util.function.Consumer;
 
@@ -44,9 +47,9 @@ public class GuideBookItem extends SimplePolymerItem {
     public Component getName(ItemStack stack) {
         var id = stack.get(BookletItems.PAGE_COMPONENT);
         if (id != null) {
-            var ctx = PacketContext.get();
+            var ctx = LocalizationTarget.forPacket();
 
-            var page = BookletImplUtil.getPage(id, ctx != null && ctx.getClientOptions() != null ? ctx.getClientOptions().language() : "en_us");
+            var page = BookletImplUtil.getPage(id, ctx != null ? ctx.getLanguageCode() : "en_us");
             if (page != null) {
                 return page.info().getExternalTitle();
             }
@@ -59,9 +62,9 @@ public class GuideBookItem extends SimplePolymerItem {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipAdder, TooltipFlag flag) {
         var id = stack.get(BookletItems.PAGE_COMPONENT);
         if (id != null) {
-            var ctx = PacketContext.get();
+            var ctx = LocalizationTarget.forPacket();
 
-            var page = BookletImplUtil.getPage(id, ctx != null && ctx.getClientOptions() != null ? ctx.getClientOptions().language() : "en_us");
+            var page = BookletImplUtil.getPage(id, ctx != null ? ctx.getLanguageCode() : "en_us");
             if (page != null && page.info().description().isPresent()) {
                 tooltipAdder.accept(Component.empty().append(page.info().description().orElseThrow()).withStyle(ChatFormatting.GRAY));
             }
@@ -70,30 +73,30 @@ public class GuideBookItem extends SimplePolymerItem {
     }
 
     @Override
-    public @Nullable Identifier getPolymerItemModel(ItemStack stack, PacketContext context) {
+    public @Nullable Identifier getPolymerItemModel(ItemStack stack, PacketContext context, HolderLookup.Provider lookup) {
         var id = stack.get(BookletItems.PAGE_COMPONENT);
         if (id != null) {
-            var ctx = PacketContext.get();
+            var ctx = LocalizationTarget.forPacket();
 
-            var page = BookletImplUtil.getPage(id, ctx != null && ctx.getClientOptions() != null ? ctx.getClientOptions().language() : "en_us");
+            var page = BookletImplUtil.getPage(id, ctx != null ? ctx.getLanguageCode() : "en_us");
             if (page != null && page.info().modelOverride().isPresent()) {
                 return page.info().modelOverride().get();
             }
         }
 
-        return super.getPolymerItemModel(stack, context);
+        return super.getPolymerItemModel(stack, context, lookup);
     }
 
     @Override
-    public void modifyBasePolymerItemStack(ItemStack out, ItemStack stack, PacketContext context) {
-        super.modifyBasePolymerItemStack(out, stack, context);
+    public void modifyBasePolymerItemStack(ItemStack out, ItemStack stack, PacketContext context, HolderLookup.Provider lookup) {
+        super.modifyBasePolymerItemStack(out, stack, context, lookup);
         var id = stack.get(BookletItems.PAGE_COMPONENT);
         int color = 0xFFFFFF;
 
         if (id != null) {
-            var ctx = PacketContext.get();
+            var ctx = LocalizationTarget.of(context);
 
-            var page = BookletImplUtil.getPage(id, ctx != null && ctx.getClientOptions() != null ? ctx.getClientOptions().language() : "en_us");
+            var page = BookletImplUtil.getPage(id, ctx.getLanguageCode());
             if (page != null) {
                 color = page.info().color();
             }

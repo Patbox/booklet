@@ -1,6 +1,7 @@
 package eu.pb4.booklet.impl.ui;
 
 import eu.pb4.sgui.api.elements.GuiElement;
+import eu.pb4.sgui.api.elements.SimpleGuiElement;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ClientboundSoundEntityPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -10,7 +11,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 
 public class GuiUtils {
-    public static final GuiElement EMPTY = GuiElement.EMPTY;
+    public static final GuiElement EMPTY = SimpleGuiElement.EMPTY;
 
     public static void playClickSound(ServerPlayer player) {
         playSoundToPlayer(player, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.UI, 0.5f, 1);
