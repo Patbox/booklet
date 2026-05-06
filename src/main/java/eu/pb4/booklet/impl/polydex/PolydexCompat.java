@@ -5,7 +5,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 public class PolydexCompat {
-    public static final boolean IS_PRESENT = FabricLoader.getInstance().isModLoaded("polydex2");
+    public static final boolean IS_PRESENT = FabricLoader.getInstance().isModLoaded("polydex");
 
 
     public static void register() {

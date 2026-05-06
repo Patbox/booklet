@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 public class PolydexCompatImpl {
 
     public static void register() {
-
     }
 
     public static void openUsagePage(ServerPlayer player, Identifier entry, Runnable runnable) {

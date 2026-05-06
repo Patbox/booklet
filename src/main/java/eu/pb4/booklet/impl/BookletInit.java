@@ -41,6 +41,7 @@ public class BookletInit  {
         BookletItems.register();
         GuiTextures.register();
         BookletImageHandler.init();
+        PolydexCompat.register();
 
         PolymerResourcePackUtils.addModAssets("booklet");
 

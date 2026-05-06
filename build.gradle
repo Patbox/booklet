@@ -58,12 +58,12 @@ dependencies {
 	implementation "eu.pb4:polymer-resource-pack-extras:${project.polymer_version}"
 
 	implementation "eu.pb4:polymer-autohost:${project.polymer_version}"
-	compileOnly 'maven.modrinth:polydex:1.9.0+26.1-rc-2'
+	compileOnly 'maven.modrinth:polydex:1.9.2+26.1-rc-3'
 
-	implementation include('eu.pb4:sgui:2.0.0-beta.1+26.1')
+	implementation include('eu.pb4:sgui:2.0.0+26.1')
 	implementation include('eu.pb4:map-canvas-api:0.8.0+26.1')
-	implementation include("eu.pb4:placeholder-api:3.0.0-beta.2+26.1")
-	implementation include('xyz.nucleoid:server-translations-api:3.0.0+26.1-pre-3')
+	implementation include("eu.pb4:placeholder-api:3.0.0+26.1")
+	implementation include('xyz.nucleoid:server-translations-api:3.0.3+26.1')
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
