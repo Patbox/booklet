@@ -2,6 +2,7 @@ package eu.pb4.booklet.impl.ui;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.chars.Char2IntMap;
 import it.unimi.dsi.fastutil.chars.Char2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2CharMap;
@@ -10,7 +11,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Tuple;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ public class UiResourceCreator {
         return c;
     }
 
-    public static Tuple<Component, Component> polydexBackground(String path) {
+    public static Pair<Component, Component> polydexBackground(String path) {
         var c = (character++);
         var d = (character++);
 
@@ -74,7 +74,7 @@ public class UiResourceCreator {
 
         FONT_TEXTURES.add(texture);
 
-        return new Tuple<>(
+        return new Pair<>(
                 Component.literal(Character.toString(c)).setStyle(STYLE),
                 Component.literal(Character.toString(d)).setStyle(STYLE)
         );
