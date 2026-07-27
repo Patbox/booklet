@@ -93,8 +93,10 @@ public class BookletInit  {
     public static void handleAction(ServerPlayer player, String path, Optional<Tag> payload) {
         var state = BookletOpenState.decode(payload);
         Identifier entry = Identifier.tryParse("");
+        String entryRaw = "";
         if (payload.isPresent() && payload.get() instanceof CompoundTag tag) {
-            entry = Identifier.tryParse(tag.getStringOr("entry", ""));
+            entryRaw = tag.getStringOr("entry", "");
+            entry = Identifier.tryParse(entryRaw);
 
             if (tag.getBooleanOr("play_click_sound", false)) {
                 GuiUtils.playClickSound(player);
@@ -106,6 +108,7 @@ public class BookletInit  {
             case "polydex/usage" -> BookletImplUtil.openPolydexUsagePage(player, entry, state);
             case "polydex/result" -> BookletImplUtil.openPolydexResultPage(player, entry, state);
             case "polydex/category" -> BookletImplUtil.openPolydexCategoryPage(player, entry, state);
+            case "polydex/search" -> BookletImplUtil.openPolydexSearchPage(player, entryRaw, state);
             case "close" -> player.closeContainer();
         }
     }

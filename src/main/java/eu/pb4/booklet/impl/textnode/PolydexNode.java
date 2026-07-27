@@ -11,14 +11,13 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.Identifier;
 
 public class PolydexNode extends ParentNode {
 
-    private final Identifier entry;
+    private final String entry;
     private final String type;
 
-    public PolydexNode(Identifier entry, String type, TextNode... node) {
+    public PolydexNode(String entry, String type, TextNode... node) {
         super(node);
         this.entry = entry;
         this.type = type;

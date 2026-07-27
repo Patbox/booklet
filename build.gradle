@@ -1,5 +1,6 @@
 plugins {
 	id 'net.fabricmc.fabric-loom' version '1.15.+'
+	id "com.modrinth.minotaur" version "2.+"
 	id 'maven-publish'
 }
 
@@ -135,5 +136,29 @@ publishing {
 				mavenLocal()
 			}
 		}
+	}
+}
+
+
+
+if (System.getenv("MODRINTH")) {
+	modrinth {
+		token = System.getenv("MODRINTH")
+		projectId = 'xxtIpapP'// The ID of your modrinth project, slugs will not work.
+		versionNumber = "" + version // The version of the mod to upload.
+		versionType = "release"
+		uploadFile = jar // This links to a task that builds your mod jar and sets "uploadFile" to the mod jar.
+		gameVersions = [((String) project.minecraft_version)]
+		changelog = System.getenv("CHANGELOG")
+		loaders = ["fabric"]
+
+		dependencies {
+			required.project "polymer"
+			optional.project "polydex"
+		}
+	}
+
+	jar {
+		finalizedBy project.tasks.modrinth
 	}
 }

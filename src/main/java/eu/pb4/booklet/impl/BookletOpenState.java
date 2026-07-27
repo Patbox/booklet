@@ -59,7 +59,7 @@ public record BookletOpenState(List<Identifier> previousPages) {
     public Dialog getDialog(Component title, List<DialogBody> body) {
         var buttonWidth = this.previousPages.isEmpty() ? 200 : 96;
         var closeButton = new ActionButton(new CommonButtonData(CommonComponents.GUI_DONE, buttonWidth),
-                Optional.of(new StaticAction(BookletImplUtil.encodeClickEvent("close", null, this))));
+                Optional.of(new StaticAction(BookletImplUtil.encodeClickEvent("close", (String) null, this))));
 
         title = Component.empty().append(Component.literal("" + GuiTextures.NEGATIVE_SPACE_2500
                 + GuiTextures.DARKENER + GuiTextures.NEGATIVE_SPACE_2500

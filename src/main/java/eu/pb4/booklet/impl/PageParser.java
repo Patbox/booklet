@@ -73,7 +73,7 @@ public class PageParser {
                             var id = args.getNext("id", "");
                             var type = args.getNext("type", "result");
 
-                            return new PolydexNode(Identifier.tryParse(id), type, node);
+                            return new PolydexNode(id, type, node);
                         }))
                         .add(TextTag.enclosing("pagelink", "booklet", (node, args, parser) -> {
                             var page = args.getNext("id", "");

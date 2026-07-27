@@ -37,4 +37,12 @@ public class PolydexCompat {
             runnable.run();
         }
     }
+
+    public static void openSearchPage(ServerPlayer player, String query, Runnable runnable) {
+        if (IS_PRESENT) {
+            PolydexCompatImpl.openSearchPage(player, query, runnable);
+        } else {
+            runnable.run();
+        }
+    }
 }

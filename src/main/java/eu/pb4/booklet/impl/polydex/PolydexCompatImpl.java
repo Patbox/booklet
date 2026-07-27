@@ -1,7 +1,7 @@
 package eu.pb4.booklet.impl.polydex;
 
 import eu.pb4.polydex.api.v1.recipe.PolydexPageUtils;
-import eu.pb4.polydex.impl.PolydexImpl;
+import eu.pb4.polydex.impl.book.ui.SearchGui;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -25,9 +25,13 @@ public class PolydexCompatImpl {
     }
 
     public static void openCategoryPage(ServerPlayer player, Identifier category, Runnable runnable) {
-        var val = PolydexImpl.CATEGORY_BY_ID.get(category);
+        var val = PolydexPageUtils.getCategoryById(category);
         if (val != null) {
             PolydexPageUtils.openCategoryUi(player, val, runnable);
         }
+    }
+
+    public static void openSearchPage(ServerPlayer player, String query, Runnable runnable) {
+        new SearchGui(player, query, runnable);
     }
 }

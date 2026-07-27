@@ -37,12 +37,21 @@ public class BookletImplUtil {
     }
 
     public static ClickEvent.Custom encodeClickEvent(String type, Identifier entry, BookletOpenState state) {
+        return encodeClickEvent(type, entry.toShortString(), state);
+    }
+
+    public static ClickEvent.Custom encodeClickEvent(String type, String entry, BookletOpenState state) {
         return encodeClickEvent(type, entry, state, false);
     }
+
     public static ClickEvent.Custom encodeClickEvent(String type, Identifier entry, BookletOpenState state, boolean playClickSound) {
+        return encodeClickEvent(type, entry.toShortString(), state, playClickSound);
+    }
+
+    public static ClickEvent.Custom encodeClickEvent(String type, String entry, BookletOpenState state, boolean playClickSound) {
         var nbt = state.encode(new CompoundTag());
         if (entry != null) {
-            nbt.putString("entry", entry.toString());
+            nbt.putString("entry", entry);
         }
         if (playClickSound) {
             nbt.putBoolean("play_click_sound", true);
@@ -142,6 +151,17 @@ public class BookletImplUtil {
         var returnState = state.popPage();
 
         PolydexCompat.openCategoryPage(player, identifier, () -> {
+            if (SguiUtils.getCurrentGui(player) != null) {
+                SguiUtils.getCurrentGui(player).close();
+            }
+            openPage(player, returnState.page(), returnState.state());
+        });
+    }
+
+    public static void openPolydexSearchPage(ServerPlayer player, String query, BookletOpenState state) {
+        var returnState = state.popPage();
+
+        PolydexCompat.openSearchPage(player, query, () -> {
             if (SguiUtils.getCurrentGui(player) != null) {
                 SguiUtils.getCurrentGui(player).close();
             }
