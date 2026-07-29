@@ -1,5 +1,6 @@
 package eu.pb4.booklet.impl;
 
+import com.mojang.datafixers.util.Pair;
 import eu.pb4.booklet.api.body.ImageBody;
 import eu.pb4.polymer.resourcepack.api.PackResource;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
@@ -37,6 +38,8 @@ public class BookletImageHandler {
 
         IMAGES.clear();
 
+        var runnable = new ArrayList<Pair<String, Runnable>>();
+
         builder.forEachResource((path, resource) -> {
             var ogpath = path;
             if (!path.startsWith("assets/")) {
@@ -55,11 +58,8 @@ public class BookletImageHandler {
                 return;
             }
             var id = Identifier.fromNamespaceAndPath(namespace, path.substring("textures/booklet/image/".length(), path.length() - ".png".length()));
-            var imageString = new StringBuilder();
-            var b = BitmapProvider.builder(Identifier.fromNamespaceAndPath(namespace, path.substring("textures/".length())));
+
             var image = resource.asImage();
-            b.height(9);
-            b.ascent(7);
 
             var scale = Mth.ceil(image.getWidth() / 292f);
             var dy = 9;
@@ -67,35 +67,6 @@ public class BookletImageHandler {
 
             var width = Mth.ceil((double) image.getWidth() / scale / dx) * dx;
             var height = Mth.ceil((double) image.getHeight() / scale / dy) * dy;
-
-            var from = fontBuilder.peek();
-
-            for (var y = 0; y < height; y += dy) {
-                var line = new StringBuilder();
-                var ix = 0;
-                for (; ix < width / 2; ix += dx) {
-                    imageString.append('b');
-                }
-
-                for (var x = 0; x < width; x += dx) {
-                    imageString.append(fontBuilder.peek());
-                    imageString.append('a');
-                    line.append(fontBuilder.advance());
-                }
-                for (; ix < width; ix += dx) {
-                    imageString.append('b');
-                }
-                b.chars(line.toString());
-
-                if (y + dy < height) {
-                    imageString.append("\n");
-                }
-            }
-            var to = fontBuilder.peek();
-
-            fontBuilder.add(b);
-
-            IMAGES.put(id, new ProcessedImage(Component.literal(imageString.toString()).setStyle(fontBuilder.style), width + width / dx + 8, from, to, fontBuilder.id));
 
             {
                 var newImage = new BufferedImage(width * scale, height * scale, BufferedImage.TYPE_INT_ARGB);
@@ -112,9 +83,48 @@ public class BookletImageHandler {
                 builder.addData(ogpath, PackResource.fromImage(newImage));
             }
 
-            fontBuilder.checkThreshold();
+            String finalPath = path;
+            runnable.add(new Pair<>(ogpath, ()-> {
+                var imageString = new StringBuilder();
+                var b = BitmapProvider.builder(Identifier.fromNamespaceAndPath(namespace, finalPath.substring("textures/".length())));
+                b.height(9);
+                b.ascent(7);
+
+                var from = fontBuilder.peek();
+
+                for (var y = 0; y < height; y += dy) {
+                    var line = new StringBuilder();
+                    var ix = 0;
+                    for (; ix < width / 2; ix += dx) {
+                        imageString.append('b');
+                    }
+
+                    for (var x = 0; x < width; x += dx) {
+                        imageString.append(fontBuilder.peek());
+                        imageString.append('a');
+                        line.append(fontBuilder.advance());
+                    }
+                    for (; ix < width; ix += dx) {
+                        imageString.append('b');
+                    }
+                    b.chars(line.toString());
+
+                    if (y + dy < height) {
+                        imageString.append("\n");
+                    }
+                }
+                var to = fontBuilder.peek();
+
+                fontBuilder.add(b);
+
+                IMAGES.put(id, new ProcessedImage(Component.literal(imageString.toString()).setStyle(fontBuilder.style), width + width / dx + 8, from, to, fontBuilder.id));
+
+                fontBuilder.checkThreshold();
+            }));
         });
 
+        runnable.sort(Comparator.comparing(Pair::getFirst));
+        runnable.forEach(x -> x.getSecond().run());
         fontBuilder.character = 0xFFFF;
         fontBuilder.checkThreshold();
     }

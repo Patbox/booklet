@@ -5,7 +5,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.dialog.*;
 import net.minecraft.server.dialog.body.DialogBody;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
 
 import java.util.List;
@@ -15,7 +14,7 @@ import java.util.function.Function;
 
 public record BookletPage(Info info, List<Function<ParserContext, List<DialogBody>>> body) {
     public record Info(Identifier identifier, Optional<ItemStackTemplate> icon, Component title, Optional<Component> externalTitle, Optional<Component> description, Set<Identifier> categories,
-                       int color, Optional<Identifier> modelOverride) {
+                       int color, Optional<Identifier> modelOverride, int order) {
         public Component getExternalTitle() {
             return this.externalTitle.orElse(title);
         }

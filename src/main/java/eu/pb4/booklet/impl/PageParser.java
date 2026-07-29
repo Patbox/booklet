@@ -2,6 +2,7 @@ package eu.pb4.booklet.impl;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.datafixers.util.Either;
+import eu.pb4.booklet.impl.textnode.*;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.arguments.SimpleArguments;
 import eu.pb4.placeholders.api.node.DirectComponentNode;
@@ -14,9 +15,6 @@ import eu.pb4.placeholders.impl.StringArgOps;
 import eu.pb4.booklet.api.body.AlignedMessage;
 import eu.pb4.booklet.api.body.HeaderMessage;
 import eu.pb4.booklet.api.body.ImageBody;
-import eu.pb4.booklet.impl.textnode.LangCheckNode;
-import eu.pb4.booklet.impl.textnode.OpenPageNode;
-import eu.pb4.booklet.impl.textnode.PolydexNode;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.HolderLookup;
@@ -75,6 +73,18 @@ public class PageParser {
 
                             return new PolydexNode(id, type, node);
                         }))
+
+                        .add(TextTag.enclosing("polydexref", "booklet", (node, args, parser) -> {
+                            var id = Identifier.tryParse(args.getNext("id", ""));
+                            var type = args.getNext("type", "result");
+
+                            if (id == null) {
+                                id = Identifier.fromNamespaceAndPath("invalid", "identifier");
+                            }
+
+                            return new PolydexRefNode(id, type);
+                        }))
+
                         .add(TextTag.enclosing("pagelink", "booklet", (node, args, parser) -> {
                             var page = args.getNext("id", "");
                             Identifier id;
@@ -89,6 +99,21 @@ public class PageParser {
                             }
 
                             return new OpenPageNode(id, node);
+                        }))
+                        .add(TextTag.self("pageref", "booklet", (node, args, parser) -> {
+                            var page = args.getNext("id", "");
+                            Identifier id;
+                            if (page.startsWith("/")) {
+                                id = currentPage.withPath(page.substring(1));
+                            } else if (page.startsWith("./")) {
+                                var spit = currentPage.getPath().split("/");
+                                spit[spit.length - 1] = page.substring(2);
+                                id = currentPage.withPath(String.join("/", spit));
+                            } else {
+                                id = Identifier.tryParse(page);
+                            }
+
+                            return new OpenPageRefNode(id);
                         }))
                         .add(TextTag.enclosing("iflang", "booklet", (node, args, parser) -> new LangCheckNode(
                                 args.getNext("language", "en_us"), SimpleArguments.bool(args.getNext("equals", "true"), true),
@@ -107,6 +132,7 @@ public class PageParser {
         var modelOverride = Optional.<Identifier>empty();
         var color = ARGB.setBrightness(ARGB.color(255, identifier.hashCode()), 0.9F);
         var categories = new HashSet<Identifier>();
+        var order = 0;
 
         page = page.replace("\r", "")
                 .replace(' ', ' ')
@@ -259,16 +285,27 @@ public class PageParser {
                     }
                     case "book_color" -> color = TextColor.parseColor(value).mapOrElse(TextColor::getValue, x -> 0xFFFFFF);
                     case "model_override" -> modelOverride = Optional.ofNullable(Identifier.tryParse(value.strip()));
+                    case "order" -> {
+                        try {
+                            order = Integer.parseInt(value.strip());
+                        } catch (Throwable e) {
+                            // Ignore
+                        }
+                    }
                 }
             }
         }
 
         body.add(contents, width, margin, alignment);
         return new BookletPage(new BookletPage.Info(identifier, infoIcon, parser.parseComponent(title, ctx), externalTitle.map(x -> parser.parseComponent(x, ctx)),
-                description.map(x -> parser.parseComponent(x, ctx)), categories, color, modelOverride), body.list);
+                description.map(x -> parser.parseComponent(x, ctx)), categories, color, modelOverride, order), body.list);
     }
 
     private TextNode stripAndParse(String string) {
+        if (string.isEmpty()) {
+            return TextNode.empty();
+        }
+
         while (string.startsWith("<nl>")) {
             string = string.substring("<nl>".length());
         }

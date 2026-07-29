@@ -10,6 +10,7 @@ import eu.pb4.booklet.api.body.ImageBody;
 import eu.pb4.booklet.impl.ui.GuiTextures;
 import eu.pb4.booklet.impl.ui.GuiUtils;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -22,6 +23,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
 
 import static eu.pb4.booklet.impl.BookletImplUtil.id;
 
@@ -59,6 +61,7 @@ public class BookletInit  {
             PAGES.clear();
             CATEGORIES.clear();
             var parser = new PageParser(server.registryAccess());
+            var order = new Object2IntOpenHashMap<Identifier>();
             for (var entry : pages.entrySet()) {
                 try {
                     var pathWithLang = entry.getKey().getPath().substring("booklet/pages/".length());
@@ -73,6 +76,8 @@ public class BookletInit  {
                     );
                     var string = new String(entry.getValue().open().readAllBytes(), StandardCharsets.UTF_8);
                     var page = parser.readPage(id, string);
+
+                    order.put(id, page.info().order());
                     PAGES.computeIfAbsent(id, x -> new HashMap<>()).put(lang, page);
 
                     for (var cat : page.info().categories()) {
@@ -84,6 +89,12 @@ public class BookletInit  {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+
+            var comparator = Comparator.<Identifier>comparingInt(order::getInt).thenComparing(Function.identity());
+
+            for (var list : CATEGORIES.values()) {
+                list.sort(comparator);
             }
         } catch (Throwable e) {
             e.printStackTrace();
